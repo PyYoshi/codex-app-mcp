@@ -38,9 +38,9 @@ Codex 連携が提供されていないツールから、Codex を協働エー�
 
 ```sh
 cd /absolute/path/to/target-project
-uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.0 \
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
   codex-app-mcp init
-uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.0 \
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
   codex-app-mcp doctor
 ```
 
@@ -150,7 +150,7 @@ claude mcp add codex -- \
 
 注意:
 
-- PyPIには公開しない。`uvx --from git+https://...@v0.1.0`でGitHubのtagを固定する。
+- PyPIには公開しない。`uvx --from git+https://...@v0.1.1`でGitHubのtagを固定する。
 - 自動探索はbridge起動directoryから親へ向かう。固定したい場合は従来どおり
   `serve --config /absolute/path/to/bridge.toml`を指定できる。
 - Codex 側（`~/.codex/config.toml` の `mcp_servers`）にこの bridge を登録すると再帰的自己接続になり得る。bridge は子 runtime 環境の `CODEX_APP_MCP_CHILD=1` で起動拒否するが、その構成自体を推奨しない。

@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,23 @@ def _is_supported_python(version_info: tuple[int, ...] = sys.version_info) -> bo
 
 def _check(ok: bool, detail: str, *, level_on_fail: str = FAIL) -> dict[str, str]:
     return {"status": _OK if ok else level_on_fail, "detail": detail}
+
+
+def _contains_bridge_reference(value: object) -> bool:
+    if isinstance(value, str):
+        return re.search(r"codex[-_]app[-_]mcp", value) is not None
+    if isinstance(value, dict):
+        return any(_contains_bridge_reference(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_bridge_reference(item) for item in value)
+    return False
+
+
+def _codex_mcp_references_bridge(config_toml: Path) -> bool:
+    """Inspect MCP server definitions without matching unrelated project paths."""
+    with config_toml.open("rb") as stream:
+        config = tomllib.load(stream)
+    return _contains_bridge_reference(config.get("mcp_servers", {}))
 
 
 async def run_doctor(
@@ -124,8 +142,7 @@ async def run_doctor(
     config_toml = codex_home / "config.toml"
     if config_toml.is_file():
         try:
-            text = config_toml.read_text(encoding="utf-8", errors="replace")
-            if re.search(r"codex[-_]app[-_]mcp", text):
+            if _codex_mcp_references_bridge(config_toml):
                 checks.append(
                     _check(
                         False,
@@ -136,7 +153,7 @@ async def run_doctor(
                 )
             else:
                 checks.append({"status": _OK, "detail": "no self-reference in Codex config"})
-        except OSError as exc:
+        except (OSError, tomllib.TOMLDecodeError) as exc:
             checks.append(_check(False, f"cannot read {config_toml}: {exc}", level_on_fail=WARN))
 
     # --- Authentication presence (contents never displayed) --------------------

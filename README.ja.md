@@ -11,16 +11,20 @@ Codex 連携が提供されていないツールから、Codex を協働エー�
 難しくなりました。このプロジェクトは、公式 Codex SDK を利用した限定的で安全側に
 倒す bridge として、その利用経路を再び提供するためのものです。
 
-- MCP transport は stdio のみ
-- 承認要求（コマンド実行・ファイル変更）は**即時拒否**（fail-closed）。`approval-policy=never` 専用
-- 既定 sandbox は `read-only`。`danger-full-access` は受理しない
-- 1 bridge process につき active turn 1 件。待ち行列なし
-- 実行済みか不明な turn は**自動再送しない**
-- 対話承認・実行中 turn への steer・HTTP 公開は v0.1 の対象外
+## 1. 安全性
 
-現行仕様と文書の読み順は `docs/README.md` を参照。
+- MCP transportはstdioのみ
+- 承認要求（command実行・file変更）は即時拒否（fail-closed）。`approval-policy=never`専用
+- 既定sandboxは`read-only`。`danger-full-access`は受理しない
+- 1 bridge processにつきactive turnは1件。暗黙の待ち行列なし
+- 実行済みか不明なturnは自動再送しない
+- `allowed_roots`の既定値は空で、すべてのworkspaceを拒否する
+- ログはstderrへ出力し、prompt・回答・認証情報・file内容を記録しない
 
-## 1. 動作要件
+本bridgeは汎用App Server gatewayではありません。対話承認、実行中turnへのsteer、
+HTTP transportはv0.1の対象外です。
+
+## 2. 動作要件
 
 | 要件 | 確認 |
 |---|---|
@@ -31,7 +35,7 @@ Codex 連携が提供されていないツールから、Codex を協働エー�
 
 依存は完全固定: `openai-codex==0.154.0`（SDK 同梱の `codex app-server` を利用）、`mcp==2.2.0`。PATH 上の他 `codex` は使用しない。
 
-## 2. セットアップ
+## 3. クイックスタート
 
 公開版はrepositoryをcloneせず、対象projectから直接実行できます（最初の実行では
 固定runtimeを含め約120 MiBをdownloadする場合があります）。
@@ -44,39 +48,29 @@ uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
   codex-app-mcp doctor
 ```
 
-開発する場合はcloneします。
-
-```sh
-git clone <this-repository> /absolute/path/to/codex-app-mcp
-cd /absolute/path/to/codex-app-mcp
-uv sync            # .venv 作成 + 依存 lock インストール
-```
-
 サポート対象は最新安定majorのPython 3.14系のみ。`pyproject.toml`で
 `>=3.14,<3.15`を要求し、`.python-version`は3.14系の最新利用可能patchを選ぶ。
 
-動作確認（推論なし・秘密情報表示なし）:
-
-```sh
-cd /absolute/path/to/target-project
-uv run --project /absolute/path/to/codex-app-mcp --frozen codex-app-mcp init
-uv run --project /absolute/path/to/codex-app-mcp --frozen codex-app-mcp doctor
-```
-
 doctor は SDK/runtime・認証の有無・自己接続の疑い・policy・モデル catalog を確認する。`ok: true` になれば使用可能。
 
-## 3. 設定
+## 4. 設定
 
 利用するrepositoryで最小設定を生成する:
 
 ```sh
 cd /absolute/path/to/target-project
-uv run --project /absolute/path/to/codex-app-mcp --frozen codex-app-mcp init
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
+  codex-app-mcp init
 ```
 
 Git root（なければ現在のdirectory）へ`bridge.toml`を作成し、そのworkspaceだけを
 `allowed_roots`へ登録する。既存fileは変更しない。ユーザー共通設定は
 `codex-app-mcp init --global`、任意の生成先は`--config PATH`を使う。
+
+`init --global`でも許可対象は現在のGit root（なければ現在directory）です。
+ホームdirectory全体など広すぎるrootは安全のため拒否します。別のworkspaceを明示する
+場合は`--root /absolute/path/to/workspace`を指定し、複数rootは生成後の
+`allowed_roots`へ追加します。
 
 ```toml
 [defaults]
@@ -105,7 +99,17 @@ format = "json"
 - 既知 section 内の未知キー（typo）は**起動時エラー**になる。
 - 全キー・既定値・環境変数・CLI 上書き: `docs/configuration.md` 参照。
 
-## 4. MCP client 登録
+設定の探索順は次のとおりです。
+
+1. 明示した`--config PATH`
+2. bridge起動directoryから親方向に探索した最寄りの`bridge.toml`
+3. `$XDG_CONFIG_HOME/codex-app-mcp/bridge.toml`などのユーザー設定
+4. fail-closedな組み込み既定値
+
+個々の設定値は`CLI > CODEX_APP_MCP_*環境変数 > TOML > 組み込み既定値`の順で
+解決します。
+
+## 5. MCP client 登録
 
 **shell 文字列ではなく executable と引数配列で登録すること。**
 
@@ -113,7 +117,7 @@ format = "json"
 
 ```sh
 claude mcp add codex -- \
-  uv run --project /absolute/path/to/codex-app-mcp --frozen \
+  uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
   codex-app-mcp serve
 ```
 
@@ -123,9 +127,9 @@ claude mcp add codex -- \
 {
   "mcpServers": {
     "codex": {
-      "command": "uv",
+      "command": "uvx",
       "args": [
-        "run", "--project", "/absolute/path/to/codex-app-mcp", "--frozen",
+        "--from", "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1",
         "codex-app-mcp", "serve"
       ]
     }
@@ -140,8 +144,11 @@ claude mcp add codex -- \
   "mcp": {
     "codex": {
       "type": "local",
-      "command": ["uv", "run", "--project", "/absolute/path/to/codex-app-mcp", "--frozen",
-                   "codex-app-mcp", "serve"],
+      "command": [
+        "uvx", "--from",
+        "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1",
+        "codex-app-mcp", "serve"
+      ],
       "enabled": true
     }
   }
@@ -150,14 +157,15 @@ claude mcp add codex -- \
 
 注意:
 
-- PyPIには公開しない。`uvx --from git+https://...@v0.1.1`でGitHubのtagを固定する。
+- shell文字列ではなくexecutableと引数配列として登録する。
+- PyPIには公開しない。GitHubのrelease tag `v0.1.1`を固定する。
 - 自動探索はbridge起動directoryから親へ向かう。固定したい場合は従来どおり
   `serve --config /absolute/path/to/bridge.toml`を指定できる。
 - Codex 側（`~/.codex/config.toml` の `mcp_servers`）にこの bridge を登録すると再帰的自己接続になり得る。bridge は子 runtime 環境の `CODEX_APP_MCP_CHILD=1` で起動拒否するが、その構成自体を推奨しない。
 
-## 5. 利用方法
+## 6. 利用方法
 
-### 5.1 新規実行（`codex`）
+### 6.1 新規実行（`codex`）
 
 ```json
 {
@@ -188,7 +196,7 @@ claude mcp add codex -- \
 blockも入る。これは `structuredContent` をモデルへ公開しないMCP clientでも
 `threadId` を取得できるようにする互換出力である。
 
-### 5.2 継続実行（`codex-reply`）
+### 6.2 継続実行（`codex-reply`）
 
 ```json
 {"prompt": "さらに日本語でも書いて。", "threadId": "01a0..."}
@@ -198,13 +206,13 @@ blockも入る。これは `structuredContent` をモデルへ公開しないMCP
 - `model` / `effort` は以降の turn に維持される拡張指定。
 - 実行中の thread への呼び出しは `THREAD_BUSY`。
 
-### 5.3 キャンセル・timeout
+### 6.3 キャンセル・timeout
 
 - client 側で request を取り消すと、bridge は当該 turn に `turn/interrupt` を送り、取消済み request への結果送信を行わない。
 - 1 turn の既定上限は 900 秒（`turn_timeout_seconds`）。超過時は interrupt 後 `TURN_TIMEOUT`（副作用が残り得る旨を `mayHaveSideEffects` で明示）。
 - **client の tool timeout は bridge の turn timeout + cleanup 猶予より長く**設定すること。
 
-### 5.4 主なエラーと対処
+### 6.4 主なエラーと対処
 
 | コード | 意味 | 対処 |
 |---|---|---|
@@ -217,27 +225,39 @@ blockも入る。これは `structuredContent` をモデルへ公開しないMCP
 | `UNSUPPORTED_SERVER_REQUEST` | runtime が未対応の承認要求を送出 | runtime は停止済み。bridge 再起動後に再試行 |
 | `RUNTIME_STOP_UNCONFIRMED` | runtime停止を確認できない | 同一processでは再開不可。bridgeを再起動し、残存processを確認 |
 
-## 6. ログと診断
+## 7. ログと診断
 
 - 診断は stderr に JSON（既定）。prompt・回答本文・token は記録されない。
 - `doctor` で SDK/runtime・認証・policy・catalog を確認できる。
 - トラブル時は `[logging] level = "DEBUG"` で詳細採取。
 
-## 7. 開発
+## 8. 開発
 
 ```sh
-uv run pytest -q               # 既定: 単体・契約・fault injection（live は自動除外）
-uv run pytest -m live -q       # live: 実認証・実 runtime・実 client（推論・ファイル操作が発生。明示許可のみ）
-uv run codex-app-mcp --version
+aqua install
+aqua exec -- uv sync --frozen --all-groups
+aqua exec -- uv run --frozen pytest -m 'not live' -q
+aqua exec -- uv run --frozen ruff check src tests
+aqua exec -- uv run --frozen ruff format --check src tests
+aqua exec -- uv build
+aqua exec -- betterleaks dir .
+aqua exec -- betterleaks git . --platform github
 ```
 
 `pyproject.toml` の `addopts = "-m 'not live'"` により、`pytest` 単体では
 live 試験が選択されません。
 
+live試験は実認証・実runtime・実推論・sandbox内のfile操作・cancel・process終了を
+伴うため、明示的な許可がある場合だけ実行します。
+
+```sh
+aqua exec -- uv run --frozen pytest -m live -q
+```
+
 - テスト構成と CT 対応表: `docs/testing.md`
 - 偽 App Server harness: `tests/contract/fake_app_server.py`
 
-## 8. 旧 MCP 実装からの移行
+## 9. 旧 MCP 実装からの移行
 
 旧 `codex mcp-server`（rust v0.153 系）からの主な差分:
 
@@ -252,9 +272,9 @@ live 試験が選択されません。
 | `codex/event` 独自通知 | あり | 標準 `notifications/progress` のみ |
 | model / effort の reply 指定 | 一部 | 拡張として対応 |
 
-移行手順: (1) 旧 `codex` MCP server 登録を解除、(2) 本 README §4 で再登録、(3) `doctor` で確認。
+移行手順: (1) 旧 `codex` MCP server 登録を解除、(2) 本 README §5 で再登録、(3) `doctor` で確認。
 
-## 9. ドキュメント
+## 10. ドキュメント
 
 | 文書 | 内容 |
 |---|---|

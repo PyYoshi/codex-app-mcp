@@ -15,7 +15,7 @@ from codex_app_mcp.config import (
     load_bridge_config,
     user_config_path,
 )
-from codex_app_mcp.doctor import _is_supported_python
+from codex_app_mcp.doctor import _codex_mcp_references_bridge, _is_supported_python
 from codex_app_mcp.errors import (
     CONFIG_KEY_DENIED,
     MODEL_NOT_ALLOWED,
@@ -136,6 +136,23 @@ def test_config_example_file_loads():
     assert config.defaults.model == "gpt-5.6-terra"
     assert config.policy.allowed_roots == ("/absolute/path/to/repository",)
     assert config.limits.max_active_turns == 1
+
+
+def test_doctor_self_reference_check_only_inspects_mcp_servers(tmp_path):
+    config = tmp_path / "config.toml"
+    config.write_text(
+        '[projects."/src/codex-app-mcp"]\ntrust_level = "trusted"\n',
+        encoding="utf-8",
+    )
+    assert not _codex_mcp_references_bridge(config)
+
+    config.write_text(
+        '[mcp_servers.codex]\ncommand = "uvx"\n'
+        'args = ["--from", "git+https://example.test/codex-app-mcp", '
+        '"codex-app-mcp", "serve"]\n',
+        encoding="utf-8",
+    )
+    assert _codex_mcp_references_bridge(config)
 
 
 def test_config_discovery_prefers_explicit_then_nearest_then_user(tmp_path):

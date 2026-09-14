@@ -45,9 +45,9 @@ Create a safe project-local configuration from the target repository:
 
 ```sh
 cd /absolute/path/to/target-project
-uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.0 \
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
   codex-app-mcp init
-uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.0 \
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
   codex-app-mcp doctor
 ```
 
@@ -72,13 +72,13 @@ the client should launch the bridge in its workspace and leave it unset. See
 ## MCP client configuration
 
 Use an executable plus an argument array, not a shell command string. Before the
-`v0.1.0` tag exists, replace it with a commit SHA.
+`v0.1.1` tag exists, replace it with a commit SHA.
 
 ### Claude Code
 
 ```sh
 claude mcp add codex -- \
-  uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.0 \
+  uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
   codex-app-mcp serve
 ```
 
@@ -91,7 +91,7 @@ claude mcp add codex -- \
       "type": "local",
       "command": [
         "uvx", "--from",
-        "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.0",
+        "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1",
         "codex-app-mcp", "serve"
       ],
       "enabled": true

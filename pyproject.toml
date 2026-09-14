@@ -1,6 +1,6 @@
 [project]
 name = "codex-app-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Local MCP bridge exposing Codex App Server threads/turns as the codex / codex-reply MCP tools (noninteractive compatibility subset)"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"

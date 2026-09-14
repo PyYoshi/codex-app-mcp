@@ -1,0 +1,64 @@
+{
+  "checksums": [
+    {
+      "id": "github_release/github.com/astral-sh/uv/0.12.13/uv-aarch64-apple-darwin.tar.gz",
+      "checksum": "7E6DDB9316ACC00F2296C82FF4D99977870EE34B2F0DDCAE9444D714DB9364ED",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/uv/0.12.13/uv-aarch64-unknown-linux-musl.tar.gz",
+      "checksum": "F44BC1037A17889FE562FFFD2002D4ED108E499FBE68B4F022AF244DC7B8244F",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/uv/0.12.13/uv-x86_64-apple-darwin.tar.gz",
+      "checksum": "5E287EF61CB6A9B61B3A83FEF124FD143E400468A7DAC794230147A810E17119",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/uv/0.12.13/uv-x86_64-pc-windows-msvc.zip",
+      "checksum": "A86C9DC7BAD9B03F388583B7187C05FE9951C2E0D392217E8FD43D97787F6EC2",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/astral-sh/uv/0.12.13/uv-x86_64-unknown-linux-musl.tar.gz",
+      "checksum": "4E2BFD0C9007B1032A50E539E965FD0A6037D87AD93AE1580D220A92D4C94098",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/betterleaks/betterleaks/v1.7.4/betterleaks_1.7.4_darwin_arm64.tar.gz",
+      "checksum": "9D68AB4A009A26F3F35131F321DDFF11E53AAA5608A1633308836A802FE2F732",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/betterleaks/betterleaks/v1.7.4/betterleaks_1.7.4_darwin_x64.tar.gz",
+      "checksum": "36AFD22F9CFC90C1DE83A9FD4A6181E3D9A7CA473783BCFED826998A64029E11",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/betterleaks/betterleaks/v1.7.4/betterleaks_1.7.4_linux_arm64.tar.gz",
+      "checksum": "038D8379935FB6699E12C2C95D0D4901A1EF420CBC553B7C4D4710570D03024E",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/betterleaks/betterleaks/v1.7.4/betterleaks_1.7.4_linux_x64.tar.gz",
+      "checksum": "9ED7739A39A26A2217F38726BFF8A8F4FE079D3B21272CAA7959823CCC444D96",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/betterleaks/betterleaks/v1.7.4/betterleaks_1.7.4_windows_arm64.zip",
+      "checksum": "3C48203A1FF18D1EBAC9B3F191015F57999BBFFCFF3833651E6A3B4944561E7F",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/betterleaks/betterleaks/v1.7.4/betterleaks_1.7.4_windows_x64.zip",
+      "checksum": "085CC79A0CDF1DC86BCF087B2BFBD337DD996FD55BFC3F9E63F9F5144437E2B2",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.538.0/registry.yaml",
+      "checksum": "2BDF2310CD8DFD9AE2015014A90554485DB37EDD0902B0AA6873023F99F53CF7",
+      "algorithm": "sha256"
+    }
+  ]
+}

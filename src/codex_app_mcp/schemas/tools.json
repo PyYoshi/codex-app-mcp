@@ -1,0 +1,171 @@
+{
+  "tools": [
+    {
+      "name": "codex",
+      "description": "Start a Codex thread and run one turn. Noninteractive compatibility subset; may modify workspace files when workspace-write is explicitly permitted. Do not retry automatically after uncertain execution.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Task to delegate to Codex. Whitespace-only input is rejected."
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Model ID. Validated against runtime capabilities and operator allowlist."
+          },
+          "effort": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Reasoning effort supported by the selected model. Omit to use the new-thread defaults."
+          },
+          "cwd": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Working directory. Relative paths resolve against the bridge startup directory."
+          },
+          "approval-policy": {
+            "type": "string",
+            "enum": [
+              "never"
+            ],
+            "description": "Only noninteractive approval policy is supported in v0.1."
+          },
+          "sandbox": {
+            "type": "string",
+            "enum": [
+              "read-only",
+              "workspace-write"
+            ],
+            "description": "Subject to operator policy. Default is read-only."
+          },
+          "config": {
+            "type": "object",
+            "properties": {
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "model_reasoning_effort": {
+                "type": "string",
+                "minLength": 1
+              },
+              "compact_prompt": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Allowed legacy config keys only. Conflicting explicit parameters are rejected at runtime."
+          },
+          "base-instructions": {
+            "type": "string"
+          },
+          "developer-instructions": {
+            "type": "string"
+          },
+          "compact-prompt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "threadId": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "threadId",
+          "content"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "codex-reply",
+      "description": "Continue an idle Codex thread with one turn. Model and effort overrides persist within the thread. Active threads are rejected; this tool does not steer an active turn.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Next task in the existing thread."
+          },
+          "threadId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Opaque Codex thread ID."
+          },
+          "conversationId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Deprecated alias for threadId. If both are supplied they must match."
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional model override, persisted for subsequent turns in the running thread."
+          },
+          "effort": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional reasoning effort override. Omission preserves the current thread setting."
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "threadId"
+            ]
+          },
+          {
+            "required": [
+              "conversationId"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "threadId": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "threadId",
+          "content"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    }
+  ]
+}

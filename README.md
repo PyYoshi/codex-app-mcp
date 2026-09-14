@@ -57,6 +57,13 @@ global config can be created with `init --global`, although project-local
 configuration is recommended. The first `uvx` run downloads the pinned runtime
 and may transfer roughly 120 MiB.
 
+`--global` changes where the configuration is stored; it does not broaden the
+allowed workspace. The current Git root is still selected by default. Use
+`--root /absolute/path/to/workspace` to select another workspace, and edit
+`allowed_roots` afterward when a global configuration must cover several
+separate locations. For safety, `init` refuses filesystem roots and the entire
+home directory.
+
 Configuration discovery is bottom-up:
 
 1. `--config PATH`, when supplied
@@ -71,8 +78,8 @@ the client should launch the bridge in its workspace and leave it unset. See
 
 ## MCP client configuration
 
-Use an executable plus an argument array, not a shell command string. Before the
-`v0.1.1` tag exists, replace it with a commit SHA.
+Use an executable plus an argument array, not a shell command string. Pin the
+release tag shown below; use a full commit SHA only when testing unreleased code.
 
 ### Claude Code
 

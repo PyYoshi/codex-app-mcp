@@ -20,7 +20,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp==2.2.0",
-    "openai-codex==0.160.0",
+    "openai-codex==0.162.1",
 ]
 
 [project.urls]

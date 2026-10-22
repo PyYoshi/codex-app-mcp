@@ -106,6 +106,11 @@ format = "json"
 3. `$XDG_CONFIG_HOME/codex-app-mcp/bridge.toml`などのユーザー設定
 4. fail-closedな組み込み既定値
 
+親方向の探索で見つかった`bridge.toml`はクローンしたrepositoryに含まれている場合が
+あるため、その`allowed_roots`はファイルを置いたdirectory配下に限られます。
+また、POSIXではファイルが自分の所有で、world-writableでない必要があります。
+それ以外のworkspaceを許可するには`--config PATH`を指定します。
+
 個々の設定値は`CLI > CODEX_APP_MCP_*環境変数 > TOML > 組み込み既定値`の順で
 解決します。
 

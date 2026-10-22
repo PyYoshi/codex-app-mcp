@@ -9,7 +9,11 @@ The default sandbox is `read-only`. `workspace-write` requires operator
 permission; `danger-full-access` is rejected. `allowed_roots` controls which
 cwd and resumed-thread workspaces are accepted, but it is not itself a file-read
 sandbox. New and resumed threads must confirm the requested sandbox and approval
-settings before a turn starts.
+settings before a turn starts. A project-local `bridge.toml` found by upward
+discovery can only allow workspaces inside its own directory, so a cloned
+repository cannot authorize working directories elsewhere; it can still allow
+itself, including `workspace-write`. Roots are resolved once at startup and
+never re-resolved per call.
 
 Existing Codex authentication is inherited; tools never accept API keys or
 login operations. Logs exclude prompts, answers, file contents, tokens, and raw

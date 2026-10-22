@@ -19,7 +19,8 @@ aqua exec -- uv run --frozen pytest -m live -q
 ```
 
 Release gates cover tool schemas, model/effort inheritance, approval denial,
-workspace/sandbox enforcement, early-event delivery, cancellation during
+workspace/sandbox enforcement, project-local configuration confinement and
+startup-resolved roots, early-event delivery, cancellation during
 startup and execution, transport loss, concurrency, stdout purity, output
 bounds, recursion prevention, close/stop ownership, and signal shutdown.
 

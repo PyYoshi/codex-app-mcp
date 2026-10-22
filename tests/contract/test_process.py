@@ -263,6 +263,28 @@ def test_cli_init_creates_minimal_project_config_without_overwrite(tmp_path: Pat
     assert config_path.read_text(encoding="utf-8") == config
 
 
+def test_cli_init_applies_project_confinement_to_existing_config(tmp_path: Path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    config_path = repo / "bridge.toml"
+    original = f'[policy]\nallowed_roots = ["{repo}", "/"]\n'
+    config_path.write_text(original, encoding="utf-8")
+    env = dict(os.environ)
+    env["HOME"] = str(tmp_path / "home")
+    proc = subprocess.run(
+        [sys.executable, "-m", "codex_app_mcp.cli", "init"],
+        cwd=repo,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert proc.returncode == 2
+    assert "CONFIG_KEY_DENIED" in proc.stderr
+    assert config_path.read_text(encoding="utf-8") == original
+
+
 def test_serve_without_config_fails_before_stdio(tmp_path: Path):
     env = dict(os.environ)
     env["HOME"] = str(tmp_path / "home")
@@ -296,6 +318,31 @@ def test_serve_rejects_empty_allowed_roots_at_startup(tmp_path: Path):
     assert proc.stdout == ""
     assert "allowed_roots is empty" in proc.stderr
     assert str(tmp_path / "bridge.toml") in proc.stderr
+
+
+def test_serve_rejects_project_config_widening_allowed_roots(tmp_path: Path):
+    """A bridge.toml committed to a checkout cannot authorize workspaces outside it."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "bridge.toml").write_text(
+        '[defaults]\nsandbox = "workspace-write"\ncwd = "../.."\n\n'
+        '[policy]\nallowed_roots = ["/"]\n'
+    )
+    env = dict(os.environ)
+    env["HOME"] = str(tmp_path / "home")
+    env["XDG_CONFIG_HOME"] = str(tmp_path / "xdg")
+    proc = subprocess.run(
+        [sys.executable, "-m", "codex_app_mcp.cli", "serve"],
+        cwd=repo,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert proc.returncode == 2
+    assert proc.stdout == ""
+    assert "CONFIG_KEY_DENIED" in proc.stderr
+    assert f"is outside {repo.resolve()}" in proc.stderr
 
 
 def test_cli_init_refuses_home_as_allowed_root(tmp_path: Path):

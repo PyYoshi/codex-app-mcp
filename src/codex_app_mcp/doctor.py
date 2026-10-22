@@ -96,9 +96,11 @@ async def run_doctor(
                     "run 'codex-app-mcp init' or pass --config PATH"
                 ),
             )
-        config = load_bridge_config(selected)
+        config = load_bridge_config(selected.path, project_local=selected.project_local)
         require_operational_policy(config)
-        checks.append(_check(True, f"configuration loaded: {selected}"))
+        checks.append(_check(True, f"configuration loaded: {selected.path}"))
+        if selected.project_local:
+            checks.append(_check(True, f"project-local policy confined to {selected.path.parent}"))
         checks.append(_check(True, "policy.allowed_roots configured"))
         default_cwd = config.defaults.cwd
         if default_cwd:

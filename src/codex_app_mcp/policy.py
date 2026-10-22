@@ -20,6 +20,9 @@ class PolicyStore:
 
     def __init__(self, config: BridgeConfig) -> None:
         self._config = config
+        # Resolved once: re-resolving per call would let a symlink created
+        # after startup redirect a root outside the operator's intent.
+        self._roots = tuple(Path(root).resolve() for root in config.policy.allowed_roots)
 
     @property
     def policy(self) -> PolicyConfig:
@@ -51,8 +54,7 @@ class PolicyStore:
                 ),
             )
         target = Path(absolute_cwd).resolve()
-        for root in self.policy.allowed_roots:
-            root_path = Path(root).resolve()
+        for root_path in self._roots:
             try:
                 target.relative_to(root_path)
                 return

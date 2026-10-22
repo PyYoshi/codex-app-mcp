@@ -5,6 +5,13 @@ Versioning and uses Git tags as its release channel.
 
 ## [Unreleased]
 
+- Security: a `bridge.toml` found by upward discovery can no longer allow
+  workspaces outside its own directory, and on POSIX must be owned by the
+  current user and not world-writable. Previously a cloned repository could
+  commit one that replaced the user's policy with `allowed_roots = ["/"]`.
+- Security: `allowed_roots` are resolved once at startup, so a symlink created
+  after startup can no longer redirect a root outside the configured path.
+
 ## [0.1.1] - 2026-09-14
 
 - Fixed `doctor` incorrectly treating a normal Codex project trust entry as a

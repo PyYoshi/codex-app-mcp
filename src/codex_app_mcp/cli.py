@@ -80,8 +80,8 @@ async def _serve(args: argparse.Namespace) -> int:
     try:
         from .config import discover_bridge_config, require_operational_policy
 
-        config_path = discover_bridge_config(args.config)
-        if config_path is None:
+        discovered = discover_bridge_config(args.config)
+        if discovered is None:
             raise BridgeError(
                 code="VALIDATION_ERROR",
                 message=(
@@ -90,7 +90,7 @@ async def _serve(args: argparse.Namespace) -> int:
                 ),
             )
         config = load_bridge_config(
-            config_path,
+            discovered.path,
             CliOverrides(
                 model=args.model,
                 effort=args.effort,
@@ -98,6 +98,7 @@ async def _serve(args: argparse.Namespace) -> int:
                 sandbox=args.sandbox,
                 approval_policy=args.approval_policy,
             ),
+            project_local=discovered.project_local,
         )
         require_operational_policy(config)
     except BridgeError as error:
@@ -152,7 +153,10 @@ def _init(args: argparse.Namespace) -> int:
 
     if destination.exists():
         try:
-            config = load_bridge_config(destination)
+            # The default destination is the file serve discovers as project-local.
+            config = load_bridge_config(
+                destination, project_local=not (args.global_config or args.config)
+            )
         except BridgeError as error:
             sys.stderr.write(
                 f"configuration error [{error.code}]: existing {destination} was not changed: "

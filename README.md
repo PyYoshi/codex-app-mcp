@@ -71,6 +71,11 @@ Configuration discovery is bottom-up:
 3. the user config (`$XDG_CONFIG_HOME/codex-app-mcp/bridge.toml`, or the platform equivalent)
 4. built-in fail-closed defaults
 
+A `bridge.toml` found by the upward search may come from a cloned repository, so
+its `allowed_roots` must stay inside the directory that holds it, and on POSIX
+the file must be owned by you and not world-writable. Pass `--config PATH` to
+allow workspaces elsewhere.
+
 Individual values use `CLI > CODEX_APP_MCP_* environment > TOML > built-in`
 precedence. `defaults.cwd` remains supported for unusual launchers, but normally
 the client should launch the bridge in its workspace and leave it unset. See

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from codex_app_mcp.backend.interface import ModelCatalogEntry
 from codex_app_mcp.config import (
     CliOverrides,
     DefaultsConfig,
+    DiscoveredConfig,
     LimitsConfig,
     PolicyConfig,
     discover_bridge_config,
@@ -15,7 +18,7 @@ from codex_app_mcp.config import (
     load_bridge_config,
     user_config_path,
 )
-from codex_app_mcp.doctor import _codex_mcp_references_bridge, _is_supported_python
+from codex_app_mcp.doctor import _codex_mcp_references_bridge, _is_supported_python, run_doctor
 from codex_app_mcp.errors import (
     CONFIG_KEY_DENIED,
     MODEL_NOT_ALLOWED,
@@ -170,12 +173,137 @@ def test_config_discovery_prefers_explicit_then_nearest_then_user(tmp_path):
     explicit = tmp_path / "explicit.toml"
 
     env = {"HOME": str(home), "XDG_CONFIG_HOME": str(xdg)}
-    assert discover_bridge_config(explicit, start_dir=nested, env=env) == explicit
-    assert discover_bridge_config(None, start_dir=nested, env=env) == nearest
+    assert discover_bridge_config(explicit, start_dir=nested, env=env) == DiscoveredConfig(explicit)
+    assert discover_bridge_config(None, start_dir=nested, env=env) == DiscoveredConfig(
+        nearest, project_local=True
+    )
     nearest.unlink()
-    assert discover_bridge_config(None, start_dir=nested, env=env) == parent
+    assert discover_bridge_config(None, start_dir=nested, env=env) == DiscoveredConfig(
+        parent, project_local=True
+    )
     parent.unlink()
-    assert discover_bridge_config(None, start_dir=nested, env=env) == user
+    assert discover_bridge_config(None, start_dir=nested, env=env) == DiscoveredConfig(user)
+
+
+@pytest.mark.parametrize("root", ["/", "..", "{outside}"])
+def test_project_config_cannot_allow_roots_outside_its_directory(tmp_path, monkeypatch, root):
+    """A bridge.toml committed to a checkout must not widen the workspace allowlist."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    monkeypatch.chdir(repo)
+    toml = repo / "bridge.toml"
+    toml.write_text(
+        f"[defaults]\nsandbox = 'workspace-write'\n\n"
+        f"[policy]\nallowed_roots = [{str(root).format(outside=tmp_path / 'other')!r}]\n"
+    )
+    with pytest.raises(BridgeError) as excinfo:
+        load_bridge_config(toml, project_local=True)
+    assert excinfo.value.code == CONFIG_KEY_DENIED
+    assert "outside" in excinfo.value.message
+    # The same file stays unrestricted when the operator selects it explicitly.
+    assert load_bridge_config(toml).policy.allowed_roots
+
+
+def test_project_config_rejects_symlink_escaping_its_directory(tmp_path, monkeypatch):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "home").symlink_to(tmp_path)
+    monkeypatch.chdir(repo)
+    toml = repo / "bridge.toml"
+    toml.write_text("[policy]\nallowed_roots = ['home']\n")
+    with pytest.raises(BridgeError) as excinfo:
+        load_bridge_config(toml, project_local=True)
+    assert excinfo.value.code == CONFIG_KEY_DENIED
+
+
+@pytest.mark.parametrize("project_local", [True, False])
+def test_roots_are_resolved_once_so_a_later_symlink_cannot_widen_them(
+    tmp_path, monkeypatch, project_local
+):
+    repo = (tmp_path / "repo").resolve()
+    (repo / "ws").mkdir(parents=True)
+    (repo / "link").symlink_to(repo / "ws")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    monkeypatch.chdir(repo)
+    toml = repo / "bridge.toml"
+    toml.write_text("[defaults]\ncwd = 'ws'\n\n[policy]\nallowed_roots = ['link']\n")
+    config = load_bridge_config(toml, project_local=project_local)
+    assert config.policy.allowed_roots == (str(repo / "ws"),)
+    store = PolicyStore(config)
+    store.check_workspace(store.resolve_cwd(None, bridge_cwd=str(repo)))
+
+    # A turn replaces the resolved root itself with a symlink to outside.
+    (repo / "ws").rmdir()
+    (repo / "ws").symlink_to(outside)
+    for cwd in (store.resolve_cwd(None, bridge_cwd=str(repo)), str(outside)):
+        with pytest.raises(BridgeError) as excinfo:
+            store.check_workspace(cwd)
+        assert excinfo.value.code == WORKSPACE_DENIED
+
+
+def test_project_config_scope_holds_when_launched_from_a_subdirectory(tmp_path, monkeypatch):
+    repo = (tmp_path / "repo").resolve()
+    (repo / "sub").mkdir(parents=True)
+    monkeypatch.chdir(repo / "sub")
+    toml = repo / "bridge.toml"
+    toml.write_text("[defaults]\ncwd = '../..'\n\n[policy]\nallowed_roots = ['..']\n")
+    config = load_bridge_config(toml, project_local=True)
+    assert config.policy.allowed_roots == (str(repo),)
+    # An escaping defaults.cwd still fails the per-call workspace check.
+    store = PolicyStore(config)
+    with pytest.raises(BridgeError) as excinfo:
+        store.check_workspace(store.resolve_cwd(None, bridge_cwd=str(repo / "sub")))
+    assert excinfo.value.code == WORKSPACE_DENIED
+
+    toml.write_text("[policy]\nallowed_roots = ['../..']\n")
+    with pytest.raises(BridgeError) as excinfo:
+        load_bridge_config(toml, project_local=True)
+    assert excinfo.value.code == CONFIG_KEY_DENIED
+
+
+def test_invalid_allowed_root_is_a_config_error(tmp_path):
+    toml = tmp_path / "bridge.toml"
+    toml.write_text('[policy]\nallowed_roots = ["a\\u0000b"]\n')
+    with pytest.raises(BridgeError) as excinfo:
+        load_bridge_config(toml, project_local=True)
+    assert excinfo.value.code == VALIDATION_ERROR
+
+
+@pytest.mark.skipif(not hasattr(os, "getuid"), reason="POSIX ownership only")
+def test_project_config_must_be_owned_and_not_world_writable(tmp_path, monkeypatch):
+    toml = tmp_path / "bridge.toml"
+    toml.write_text(f"[policy]\nallowed_roots = [{str(tmp_path)!r}]\n")
+    toml.chmod(0o646)
+    with pytest.raises(BridgeError) as excinfo:
+        load_bridge_config(toml, project_local=True)
+    assert excinfo.value.code == CONFIG_KEY_DENIED
+
+    # Group-writable stays accepted for user-private-group umask 002 setups.
+    toml.chmod(0o664)
+    load_bridge_config(toml, project_local=True)
+    uid = os.getuid()
+    monkeypatch.setattr(os, "getuid", lambda: uid + 1)
+    with pytest.raises(BridgeError) as excinfo:
+        load_bridge_config(toml, project_local=True)
+    assert excinfo.value.code == CONFIG_KEY_DENIED
+
+
+async def test_doctor_applies_project_config_confinement(tmp_path, monkeypatch):
+    repo = (tmp_path / "repo").resolve()
+    repo.mkdir()
+    monkeypatch.chdir(repo)
+    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex"))
+    toml = repo / "bridge.toml"
+    toml.write_text("[policy]\nallowed_roots = ['/']\n")
+    report = await run_doctor(skip_runtime=True)
+    assert report["ok"] is False
+    assert any("CONFIG_KEY_DENIED" in check["detail"] for check in report["checks"])
+
+    toml.write_text("[policy]\nallowed_roots = ['.']\n")
+    report = await run_doctor(skip_runtime=True)
+    details = [check["detail"] for check in report["checks"]]
+    assert f"project-local policy confined to {repo}" in details
 
 
 def test_user_config_falls_back_when_xdg_is_relative(tmp_path):

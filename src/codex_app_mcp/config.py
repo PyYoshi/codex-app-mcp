@@ -11,6 +11,7 @@ threads on every turn.
 from __future__ import annotations
 
 import os
+import stat
 import tomllib
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
@@ -276,16 +277,60 @@ class CliOverrides:
     approval_policy: str | None = None
 
 
+def _check_project_config_owner(config_path: Path, info: os.stat_result) -> None:
+    """Reject a discovered file another local user could have written."""
+    if not hasattr(os, "getuid"):
+        return
+    if info.st_uid != os.getuid() or info.st_mode & stat.S_IWOTH:
+        raise BridgeError(
+            code=CONFIG_KEY_DENIED,
+            message=(
+                f"project-local {config_path} must be owned by the current user and "
+                "not writable by others; fix it or pass --config PATH"
+            ),
+        )
+
+
+def _freeze_roots(policy: PolicyConfig, project_config: Path | None) -> PolicyConfig:
+    """Resolve ``allowed_roots`` once, against the launch directory.
+
+    Workspace checks never re-resolve a root, so a symlink created after
+    startup cannot widen it. A project-local file found by upward discovery
+    may come from an untrusted checkout, so its roots must also stay under the
+    directory that holds it.
+    """
+    scope = project_config.parent.resolve() if project_config is not None else None
+    roots: list[str] = []
+    for root in policy.allowed_roots:
+        try:
+            resolved = Path(root).resolve()
+        except (OSError, ValueError) as exc:
+            raise _err(f"[policy] allowed_roots entry {root!r} is not a valid path") from exc
+        if scope is not None and not resolved.is_relative_to(scope):
+            raise BridgeError(
+                code=CONFIG_KEY_DENIED,
+                message=(
+                    f"[policy] allowed_roots entry {root!r} in project-local {project_config} "
+                    f"is outside {scope}; pass --config PATH to allow workspaces outside "
+                    "the project"
+                ),
+            )
+        roots.append(str(resolved))
+    return replace(policy, allowed_roots=tuple(roots))
+
+
 def load_bridge_config(
     path: str | Path | None,
     cli: CliOverrides | None = None,
     *,
     env: Mapping[str, str] | None = None,
+    project_local: bool = False,
 ) -> BridgeConfig:
     """Resolve the effective bridge configuration.
 
     ``env`` defaults to ``os.environ``. Unknown TOML top-level sections are
-    rejected rather than silently ignored.
+    rejected rather than silently ignored. ``project_local`` marks a file
+    found by upward discovery, whose policy is confined to its directory.
     """
     env = os.environ if env is None else env
     data: dict[str, object] = {}
@@ -296,6 +341,8 @@ def load_bridge_config(
             raise _err(f"bridge config file not found: {config_path}")
         try:
             with open(config_path, "rb") as fh:
+                if project_local:
+                    _check_project_config_owner(config_path, os.fstat(fh.fileno()))
                 data = tomllib.load(fh)
         except tomllib.TOMLDecodeError as exc:
             raise _err(f"invalid TOML in {config_path}: {exc}") from exc
@@ -311,6 +358,7 @@ def load_bridge_config(
     runtime, defaults, policy, limits, logging_config, provenance = _parse_toml_section(data)
     if source == "defaults":
         provenance = {}
+    policy = _freeze_roots(policy, Path(path) if project_local and path is not None else None)
 
     # Environment overrides (bridge-specific variables only).
     def _env(name: str) -> str | None:
@@ -401,23 +449,31 @@ def user_config_path(*, env: Mapping[str, str] | None = None) -> Path:
     return base / "codex-app-mcp" / "bridge.toml"
 
 
+@dataclass(frozen=True, slots=True)
+class DiscoveredConfig:
+    """A selected config file; ``project_local`` when found by upward search."""
+
+    path: Path
+    project_local: bool = False
+
+
 def discover_bridge_config(
     explicit: str | Path | None,
     *,
     start_dir: str | Path | None = None,
     env: Mapping[str, str] | None = None,
-) -> Path | None:
+) -> DiscoveredConfig | None:
     """Find one config: explicit, nearest ancestor, then the XDG user file."""
     if explicit is not None:
-        return Path(explicit).expanduser().resolve()
+        return DiscoveredConfig(Path(explicit).expanduser().resolve())
     current = Path.cwd() if start_dir is None else Path(start_dir)
     current = current.expanduser().resolve()
     for directory in (current, *current.parents):
         candidate = directory / "bridge.toml"
         if candidate.is_file():
-            return candidate
+            return DiscoveredConfig(candidate, project_local=True)
     candidate = user_config_path(env=env)
-    return candidate if candidate.is_file() else None
+    return DiscoveredConfig(candidate) if candidate.is_file() else None
 
 
 def find_workspace_root(start_dir: str | Path | None = None) -> Path:

@@ -5,6 +5,19 @@ directory for the nearest `bridge.toml`, then checks the user configuration
 directory. Built-in defaults are fail-closed. Per-setting precedence is
 `CLI > CODEX_APP_MCP_* environment > TOML > built-in`.
 
+A file found by the upward search is project-local and may be committed to an
+untrusted checkout. Startup rejects it with `CONFIG_KEY_DENIED` unless it is
+owned by the current user and not world-writable (POSIX), and unless every
+`allowed_roots` entry resolves inside the directory holding the file. An
+explicit `--config` file and the user configuration are not confined; use
+`--config` for other workspaces, or on filesystems that cannot represent
+ownership. Because discovery stops at the nearest file, the user configuration
+is not read while a project-local file exists.
+
+`allowed_roots` entries are resolved once at startup, relative entries against
+the launch directory. Workspace checks never re-resolve them, so a symlink
+created later cannot widen a root.
+
 `codex-app-mcp init` creates a project-local file, allows the resolved Git root
 (or current directory), and never overwrites an existing file. `init --global`
 and `init --config PATH` select other destinations.

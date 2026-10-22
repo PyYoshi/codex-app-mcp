@@ -29,8 +29,8 @@ _OK, WARN, FAIL = "ok", "warning", "fail"
 
 
 def _is_supported_python(version_info: tuple[int, ...] = sys.version_info) -> bool:
-    """Return whether the interpreter is in the supported 3.14 major line."""
-    return (3, 14) <= version_info[:2] < (3, 15)
+    """Return whether the interpreter is in the supported 3.15 major line."""
+    return (3, 15) <= version_info[:2] < (3, 16)
 
 
 def _check(ok: bool, detail: str, *, level_on_fail: str = FAIL) -> dict[str, str]:

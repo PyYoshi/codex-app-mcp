@@ -11,6 +11,10 @@ Versioning and uses Git tags as its release channel.
   commit one that replaced the user's policy with `allowed_roots = ["/"]`.
 - Security: `allowed_roots` are resolved once at startup, so a symlink created
   after startup can no longer redirect a root outside the configured path.
+- Changed the supported Python major from 3.14 to 3.15; Python 3.14 is no
+  longer supported.
+- Updated the runtime boundaries to `openai-codex==0.163.0` (with its bundled
+  runtime) and `mcp==2.3.0`.
 
 ## [0.1.1] - 2026-09-14
 

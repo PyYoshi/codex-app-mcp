@@ -24,10 +24,10 @@ Read the root README, `docs/README.md`, and the relevant document under
 
 ## Environment
 
-Support Python 3.14.x only, using `.python-version` as the development major.
+Support Python 3.15.x only, using `.python-version` as the development major.
 Use aqua for pinned developer tools and uv with `uv.lock` for Python
-dependencies. The runtime boundaries are `openai-codex==0.154.0` and
-`mcp==2.2.0`.
+dependencies. The runtime boundaries are `openai-codex==0.163.0` and
+`mcp==2.3.0`.
 
 Do not change dependency versions to bypass failures or silently substitute a
 different `codex` from PATH. Supporting a new Python major is a separate

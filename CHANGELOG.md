@@ -5,6 +5,8 @@ Versioning and uses Git tags as its release channel.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-23
+
 - Security: a `bridge.toml` found by upward discovery can no longer allow
   workspaces outside its own directory, and on POSIX must be owned by the
   current user and not world-writable. Previously a cloned repository could
@@ -15,6 +17,8 @@ Versioning and uses Git tags as its release channel.
   longer supported.
 - Updated the runtime boundaries to `openai-codex==0.163.0` (with its bundled
   runtime) and `mcp==2.3.0`.
+- Updated the pinned developer tools (uv 0.13.5, betterleaks 1.9.0) and the CI
+  aqua installation (aqua 2.65.2).
 
 ## [0.1.1] - 2026-09-14
 
@@ -30,6 +34,7 @@ Versioning and uses Git tags as its release channel.
 - Added structured results with a text fallback for MCP clients including OpenCode.
 - Validated the pinned SDK against fake App Server contract tests and live Codex runtime tests.
 
-[Unreleased]: https://github.com/PyYoshi/codex-app-mcp/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/PyYoshi/codex-app-mcp/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/PyYoshi/codex-app-mcp/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/PyYoshi/codex-app-mcp/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/PyYoshi/codex-app-mcp/releases/tag/v0.1.0

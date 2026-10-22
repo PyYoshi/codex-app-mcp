@@ -45,9 +45,9 @@ Create a safe project-local configuration from the target repository:
 
 ```sh
 cd /absolute/path/to/target-project
-uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2 \
   codex-app-mcp init
-uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2 \
   codex-app-mcp doctor
 ```
 
@@ -90,7 +90,7 @@ release tag shown below; use a full commit SHA only when testing unreleased code
 
 ```sh
 claude mcp add codex -- \
-  uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
+  uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2 \
   codex-app-mcp serve
 ```
 
@@ -103,7 +103,7 @@ claude mcp add codex -- \
       "type": "local",
       "command": [
         "uvx", "--from",
-        "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1",
+        "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2",
         "codex-app-mcp", "serve"
       ],
       "enabled": true

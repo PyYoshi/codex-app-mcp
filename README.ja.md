@@ -42,9 +42,9 @@ HTTP transportはv0.1の対象外です。
 
 ```sh
 cd /absolute/path/to/target-project
-uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2 \
   codex-app-mcp init
-uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2 \
   codex-app-mcp doctor
 ```
 
@@ -59,7 +59,7 @@ doctor は SDK/runtime・認証の有無・自己接続の疑い・policy・モ�
 
 ```sh
 cd /absolute/path/to/target-project
-uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
+uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2 \
   codex-app-mcp init
 ```
 
@@ -122,7 +122,7 @@ format = "json"
 
 ```sh
 claude mcp add codex -- \
-  uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
+  uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2 \
   codex-app-mcp serve
 ```
 
@@ -134,7 +134,7 @@ claude mcp add codex -- \
     "codex": {
       "command": "uvx",
       "args": [
-        "--from", "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1",
+        "--from", "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2",
         "codex-app-mcp", "serve"
       ]
     }
@@ -151,7 +151,7 @@ claude mcp add codex -- \
       "type": "local",
       "command": [
         "uvx", "--from",
-        "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1",
+        "git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.2",
         "codex-app-mcp", "serve"
       ],
       "enabled": true
@@ -163,7 +163,7 @@ claude mcp add codex -- \
 注意:
 
 - shell文字列ではなくexecutableと引数配列として登録する。
-- PyPIには公開しない。GitHubのrelease tag `v0.1.1`を固定する。
+- PyPIには公開しない。GitHubのrelease tag `v0.1.2`を固定する。
 - 自動探索はbridge起動directoryから親へ向かう。固定したい場合は従来どおり
   `serve --config /absolute/path/to/bridge.toml`を指定できる。
 - Codex 側（`~/.codex/config.toml` の `mcp_servers`）にこの bridge を登録すると再帰的自己接続になり得る。bridge は子 runtime 環境の `CODEX_APP_MCP_CHILD=1` で起動拒否するが、その構成自体を推奨しない。

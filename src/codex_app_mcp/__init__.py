@@ -5,7 +5,7 @@ threads and turns, using the official ``openai-codex`` SDK. Noninteractive
 compatibility subset; see ``docs/`` for the specification.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 CHILD_ENV_FLAG = "CODEX_APP_MCP_CHILD"
 """Set in the child runtime environment to break recursive self-connections."""

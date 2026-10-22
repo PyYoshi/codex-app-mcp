@@ -107,7 +107,7 @@ class FakeAppServer:
             "updatedAt": now,
             "cwd": overrides.get("cwd", cwd),
             "ephemeral": False,
-            "cliVersion": "0.154.0-fake",
+            "cliVersion": "0.163.0-fake",
             "modelProvider": "openai",
             "preview": "fake thread",
             "sessionId": f"session-{thread_id}",
@@ -155,9 +155,9 @@ class FakeAppServer:
         result = {
             "serverInfo": self.scenario.get(
                 "initialize",
-                {"name": "fake-app-server", "version": "0.154.0"},
+                {"name": "fake-app-server", "version": "0.163.0"},
             ),
-            "userAgent": "codex-fake/0.154.0",
+            "userAgent": "codex-fake/0.163.0",
             "platformFamily": "linux",
         }
         InitializeResponse.model_validate(result)

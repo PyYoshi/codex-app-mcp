@@ -30,12 +30,12 @@ an active turn, and HTTP transport are outside the v0.1 scope.
 
 ## Requirements
 
-- Python 3.14.x (the latest stable Python major supported by this release)
+- Python 3.15.x (the latest stable Python major supported by this release)
 - [uv](https://docs.astral.sh/uv/)
 - an existing Codex login, such as `~/.codex/auth.json`
 - network access to OpenAI when running inference
 
-Runtime boundaries are pinned to `openai-codex==0.154.0` and `mcp==2.2.0`.
+Runtime boundaries are pinned to `openai-codex==0.163.0` and `mcp==2.3.0`.
 The Codex runtime bundled with the SDK is used; an unrelated `codex` on `PATH`
 is not substituted.
 

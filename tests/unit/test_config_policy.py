@@ -50,7 +50,7 @@ def _config(**kw) -> object:
 
 @pytest.mark.parametrize(
     ("version", "supported"),
-    [((3, 13, 15), False), ((3, 14, 0), True), ((3, 14, 99), True), ((3, 15, 0), False)],
+    [((3, 14, 99), False), ((3, 15, 0), True), ((3, 15, 99), True), ((3, 16, 0), False)],
 )
 def test_doctor_python_support_matches_package_metadata(version, supported):
     assert _is_supported_python(version) is supported

@@ -4,7 +4,7 @@ Thank you for helping improve `codex-app-mcp`.
 
 ## Development setup
 
-The project supports Python 3.14.x only. Install aqua, then run:
+The project supports Python 3.15.x only. Install aqua, then run:
 
 ```sh
 aqua install

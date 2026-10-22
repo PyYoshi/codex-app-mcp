@@ -28,12 +28,12 @@ HTTP transportはv0.1の対象外です。
 
 | 要件 | 確認 |
 |---|---|
-| Python 3.14.x（開発majorは`.python-version`参照） | `codex-app-mcp doctor` |
+| Python 3.15.x（開発majorは`.python-version`参照） | `codex-app-mcp doctor` |
 | [uv](https://docs.astral.sh/uv/) | `uv --version` |
 | Codex 認証済み（`~/.codex/auth.json` 等） | `codex-app-mcp doctor` が存在のみ確認 |
 | ネットワーク: モデル推論に OpenAI への接続 | doctor の catalog 確認 |
 
-依存は完全固定: `openai-codex==0.154.0`（SDK 同梱の `codex app-server` を利用）、`mcp==2.2.0`。PATH 上の他 `codex` は使用しない。
+依存は完全固定: `openai-codex==0.163.0`（SDK 同梱の `codex app-server` を利用）、`mcp==2.3.0`。PATH 上の他 `codex` は使用しない。
 
 ## 3. クイックスタート
 
@@ -48,8 +48,8 @@ uvx --from git+https://github.com/PyYoshi/codex-app-mcp.git@v0.1.1 \
   codex-app-mcp doctor
 ```
 
-サポート対象は最新安定majorのPython 3.14系のみ。`pyproject.toml`で
-`>=3.14,<3.15`を要求し、`.python-version`は3.14系の最新利用可能patchを選ぶ。
+サポート対象は最新安定majorのPython 3.15系のみ。`pyproject.toml`で
+`>=3.15,<3.16`を要求し、`.python-version`は3.15系の最新利用可能patchを選ぶ。
 
 doctor は SDK/runtime・認証の有無・自己接続の疑い・policy・モデル catalog を確認する。`ok: true` になれば使用可能。
 

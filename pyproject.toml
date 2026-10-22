@@ -3,7 +3,7 @@ name = "codex-app-mcp"
 version = "0.1.1"
 description = "Local MCP bridge exposing Codex App Server threads/turns as the codex / codex-reply MCP tools (noninteractive compatibility subset)"
 readme = "README.md"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.15,<3.16"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [
@@ -15,12 +15,12 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "mcp==2.2.0",
-    "openai-codex==0.160.0",
+    "mcp==2.3.0",
+    "openai-codex==0.163.0",
 ]
 
 [project.urls]
@@ -58,7 +58,7 @@ markers = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py314"
+target-version = "py315"
 
 [tool.ruff.lint.per-file-ignores]
 # Long assertion messages are part of these regression diagnostics.

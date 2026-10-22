@@ -112,6 +112,27 @@ def test_commentary_and_command_output_excluded():
     assert outcome.final_text is None
 
 
+def test_partial_answer_is_never_the_final_text():
+    """openai-codex 0.163.0 added MessagePhase.partial_answer; like the SDK's own
+    final-response scan, only final_answer or phase-unspecified text counts."""
+    reducer = TurnResultReducer()
+    _observe_sequence(
+        reducer,
+        [
+            _Item("agentMessage", "途中まで", "partial_answer"),
+            _Item("agentMessage", "最終回答", "final_answer"),
+            _Item("agentMessage", "後続の途中", "partial_answer"),
+        ],
+    )
+    reducer.observe("turn/completed", _TurnCompleted("th", _Turn("t1", "completed")))
+    assert reducer.finalize().final_text == "最終回答"
+
+    reducer = TurnResultReducer()
+    _observe_sequence(reducer, [_Item("agentMessage", "途中まで", "partial_answer")])
+    reducer.observe("turn/completed", _TurnCompleted("th", _Turn("t1", "completed")))
+    assert reducer.finalize().final_text is None
+
+
 def test_failed_turn_raises():
     reducer = TurnResultReducer()
     reducer.observe(
